@@ -1,0 +1,63 @@
+{
+  "name": "@starter-template/database",
+  "version": "0.1.0",
+  "description": "Supabase database utilities and types for starter template",
+  "main": "./dist/index.js",
+  "module": "./dist/index.esm.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "migrations",
+    "schemas"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "type-check": "tsc --noEmit",
+    "generate:types": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" --schema public > src/types/database.ts",
+    "generate:local": "supabase gen types typescript --local --schema public > src/types/database.ts",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "db:pull": "supabase db pull",
+    "migration:new": "supabase migration new",
+    "migration:up": "supabase migration up",
+    "migrate": "ts-node src/migrations/cli.ts run",
+    "migrate:status": "ts-node src/migrations/cli.ts status",
+    "migrate:validate": "ts-node src/migrations/cli.ts validate",
+    "migrate:dry-run": "ts-node src/migrations/cli.ts run --dry-run",
+    "seed": "supabase db reset --db-url $DATABASE_URL",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@types/jest": "^29.5.8",
+    "@types/node": "^20.0.0",
+    "eslint": "^8.45.0",
+    "jest": "^29.7.0",
+    "rollup": "^4.6.1",
+    "rollup-plugin-dts": "^6.1.0",
+    "supabase": "^1.142.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.3"
+  }
+}
