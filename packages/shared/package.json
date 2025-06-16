@@ -38,8 +38,8 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "type-check": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test": "vitest",
+    "test:watch": "vitest --watch"
   },
   "dependencies": {
     "zod": "^3.22.4"

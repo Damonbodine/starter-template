@@ -1,28 +1,44 @@
 # @starter-template/database
 
-A comprehensive Supabase database package with TypeScript types, utilities, migrations, and validation schemas.
+A comprehensive Supabase database package providing TypeScript types, client configuration, utilities, migrations, and validation schemas for the starter template monorepo.
 
-## Features
+## 🎯 Overview
 
-- 🔧 **Supabase Client Configuration** - Pre-configured clients with environment validation
-- 📝 **TypeScript Types** - Auto-generated types from your database schema
-- 🔐 **Row Level Security** - Pre-built RLS policies and management utilities
-- 🔄 **Migration System** - Database migrations with CLI tools
-- ✅ **Zod Validation** - Runtime validation schemas for all database entities
-- 🛠️ **Utility Functions** - CRUD operations, authentication, real-time subscriptions
-- 📁 **Storage Integration** - File upload/download utilities for Supabase Storage
+This package provides a complete database layer built on Supabase, offering:
 
-## Installation
+- **Type-Safe Database Operations**: Auto-generated TypeScript types from your database schema
+- **Authentication Integration**: Built-in auth utilities with Supabase Auth
+- **Real-time Subscriptions**: Live data updates with Supabase Realtime
+- **File Storage**: Supabase Storage integration for file uploads
+- **Migration System**: Database schema migrations with CLI tools
+- **Row Level Security**: Pre-built RLS policies and management
+- **Validation Schemas**: Runtime validation with Zod
+- **CRUD Utilities**: Common database operations with error handling
+
+## ✨ Features
+
+- **TypeScript First**: Fully typed database operations and responses
+- **Cross-Platform**: Works on web (Next.js) and mobile (React Native/Expo)
+- **Real-time Ready**: Built-in real-time subscription utilities
+- **Authentication**: Complete auth flow with profile management
+- **File Storage**: Image upload, file management, and signed URLs
+- **Migration Tools**: Database versioning and schema management
+- **Validation**: Runtime type checking with Zod schemas
+- **RLS Policies**: Security-first design with row-level security
+- **Developer Tools**: CLI commands for database management
+
+## 📦 Installation
+
+This package is part of the monorepo and automatically available to other packages and apps.
+
+For external use:
 
 ```bash
-# Using pnpm (recommended)
-pnpm add @starter-template/database
-
-# Using npm
 npm install @starter-template/database
-
-# Using yarn
+# or
 yarn add @starter-template/database
+# or
+pnpm add @starter-template/database
 ```
 
 ## Quick Start

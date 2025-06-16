@@ -1,9 +1,37 @@
 {
   "*.{js,jsx,ts,tsx}": [
-    "eslint --fix",
-    "prettier --write"
+    "eslint --fix --max-warnings=0",
+    "prettier --write",
+    "git add"
   ],
   "*.{json,md,mdx,css,html,yml,yaml,scss}": [
-    "prettier --write"
+    "prettier --write",
+    "git add"
+  ],
+  "packages/*/package.json": [
+    "sort-package-json",
+    "prettier --write",
+    "git add"
+  ],
+  "apps/*/package.json": [
+    "sort-package-json", 
+    "prettier --write",
+    "git add"
+  ],
+  "package.json": [
+    "sort-package-json",
+    "prettier --write",
+    "git add"
+  ],
+  "*.{ts,tsx}": [
+    "bash -c 'pnpm type-check'"
+  ],
+  "**/*.test.{js,jsx,ts,tsx}": [
+    "jest --bail --findRelatedTests --passWithNoTests"
+  ],
+  "*.stories.{js,jsx,ts,tsx}": [
+    "eslint --fix --max-warnings=0",
+    "prettier --write",
+    "git add"
   ]
 }

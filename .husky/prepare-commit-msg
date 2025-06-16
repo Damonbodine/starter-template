@@ -1,0 +1,44 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Get the commit message file
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+
+# Only modify the commit message if it's not from a merge, rebase, or other source
+if [ -z "$COMMIT_SOURCE" ] || [ "$COMMIT_SOURCE" = "message" ]; then
+  # Check if this is an empty commit message (new commit)
+  if [ ! -s "$COMMIT_MSG_FILE" ]; then
+    # Get the current branch name
+    BRANCH_NAME=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD)
+    
+    # Extract ticket number if branch follows pattern like feature/PROJ-123-description
+    TICKET=$(echo "$BRANCH_NAME" | grep -o '[A-Z]\{2,\}-[0-9]\+' || true)
+    
+    # Create commit message template
+    {
+      echo "# Commit message template:"
+      echo "# <type>(<scope>): <description>"
+      echo "#"
+      echo "# Types: feat, fix, docs, style, refactor, perf, test, chore"
+      echo "# Scope: web, mobile, ui, database, shared, ci, etc."
+      echo "#"
+      echo "# Example:"
+      echo "# feat(web): add user authentication flow"
+      echo "# fix(mobile): resolve navigation crash on Android"
+      echo "# docs(shared): update API documentation"
+      echo "#"
+      if [ -n "$TICKET" ]; then
+        echo "# Detected ticket: $TICKET"
+        echo "# Consider including: [$TICKET] in your commit message"
+        echo "#"
+      fi
+      echo "# Uncomment and edit the line below:"
+      if [ -n "$TICKET" ]; then
+        echo "# feat(scope): [$TICKET] "
+      else
+        echo "# feat(scope): "
+      fi
+    } > "$COMMIT_MSG_FILE"
+  fi
+fi

@@ -1,27 +1,43 @@
 # @starter-template/shared
 
-Shared utilities, types, and constants for the starter template monorepo. This package provides cross-platform functionality that can be used across web and mobile applications.
+Shared utilities, types, constants, and services used across the monorepo. This package provides common functionality to prevent code duplication and ensure consistency across web and mobile applications.
 
-## Features
+## 🎯 Overview
 
-- 📱 **Cross-platform**: Works on React, React Native, and Node.js
-- 🔒 **Authentication**: Comprehensive auth utilities with guards and permissions
-- 🔧 **Type-safe**: Full TypeScript support with strict typing
-- 📡 **API Client**: Configurable HTTP client with interceptors and retry logic
-- 🛡️ **Error Handling**: Structured error types and handling utilities
-- 🧪 **Well Tested**: Comprehensive test coverage with Jest
+This package serves as the foundation for the starter template monorepo, providing:
 
-## Installation
+- **Type Definitions**: Shared TypeScript interfaces and types
+- **Utility Functions**: Common helper functions for data manipulation, validation, and formatting
+- **Constants**: Application-wide constants, configuration values, and enums
+- **API Client**: Type-safe HTTP client with automatic error handling
+- **Error Handling**: Centralized error management and recovery
+- **Authentication**: Auth utilities, guards, and storage management
+- **State Management**: Zustand stores and TanStack Query configurations
+
+## ✨ Features
+
+- **TypeScript First**: Full type safety across all utilities
+- **Tree Shakeable**: Import only what you need
+- **Cross-Platform**: Works seamlessly on web and React Native
+- **Validated**: Runtime validation with Zod schemas
+- **Tested**: Comprehensive test coverage
+- **Well-Documented**: Detailed JSDoc comments
+
+## 📦 Installation
+
+This package is part of the monorepo and automatically available to other packages and apps.
+
+For external use:
 
 ```bash
-# Install the package
+npm install @starter-template/shared
+# or
+yarn add @starter-template/shared
+# or
 pnpm add @starter-template/shared
-
-# Install peer dependencies
-pnpm add zod date-fns
 ```
 
-## Quick Start
+## 🚀 Usage
 
 ```typescript
 import {

@@ -1,50 +1,264 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-node_modules
+# Dependencies
+node_modules/
 .pnp
 .pnp.js
+.yarn/
+.pnpm-lock.yaml
 
-# testing
-coverage
+# Testing
+coverage/
+.nyc_output/
+__coverage__/
+.lcov
+*.lcov
 
-# next.js
+# Build outputs
 .next/
 out/
-build
-
-# expo
-.expo/
+build/
 dist/
+.turbo/
+storybook-static/
+
+# Expo
+.expo/
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
 *.orig.*
+*.aab
+*.apk
 
-# misc
-.DS_Store
-*.pem
+# Environment files - Keep examples, ignore actual env files
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.staging.local
+.env.production.local
+.env.test.local
 
-# debug
+# Allow environment examples and non-local environment files
+!.env.example
+!.env.development
+!.env.staging
+!.env.production
+!.env.test
+
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# local env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
 
-# turbo
-.turbo
+# Coverage directory used by tools like istanbul
+lib-cov/
 
-# vercel
+# nyc test coverage
+.nyc_output/
+
+# Grunt intermediate storage
+.grunt/
+
+# Bower dependency directory
+bower_components/
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+jspm_packages/
+
+# Snowpack dependency directory
+web_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+.tscache/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+build-storybook
+storybook-static
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-workspace
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Certificates and keys
+*.pem
+*.crt
+*.key
+*.p12
+*.jks
+
+# Vercel
 .vercel
 
-# typescript
-*.tsbuildinfo
+# Sentry
+.sentryclirc
+
+# Supabase
+.supabase/
+
+# Local development
+.local
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Cloud deployment
+.serverless/
+.firebase/
+.gcloud/
+
+# IDE
+*.sublime-project
+*.sublime-workspace
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Cloudflare
+.wrangler/
+
+# Changeset
+.changeset/
+
+# Rush
+common/temp/
+
+# MacOS
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk

@@ -35,8 +35,8 @@
     "type-check": "tsc --noEmit",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test": "vitest",
+    "test:watch": "vitest --watch"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.0",

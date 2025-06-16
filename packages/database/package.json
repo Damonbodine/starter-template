@@ -39,8 +39,8 @@
     "migrate:validate": "ts-node src/migrations/cli.ts validate",
     "migrate:dry-run": "ts-node src/migrations/cli.ts run --dry-run",
     "seed": "supabase db reset --db-url $DATABASE_URL",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test": "vitest",
+    "test:watch": "vitest --watch"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
