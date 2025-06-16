@@ -21,7 +21,6 @@
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,mdx,css,html,yml,yaml}\"",
     "prepare": "husky install",
     "commit": "cz",
-    "postinstall": "pnpm build",
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "changeset:publish": "changeset publish",
