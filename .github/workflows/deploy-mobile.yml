@@ -1,0 +1,420 @@
+name: Deploy Mobile Application
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+      profile:
+        description: 'Build profile'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - development
+          - preview
+          - staging
+          - production
+      submit:
+        description: 'Submit to app stores'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: deploy-mobile-${{ github.ref }}-${{ github.event.inputs.profile || 'auto' }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
+jobs:
+  # Setup deployment configuration
+  setup:
+    name: Setup Mobile Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      profile: ${{ steps.config.outputs.profile }}
+      platform: ${{ steps.config.outputs.platform }}
+      should_submit: ${{ steps.config.outputs.should_submit }}
+      build_ios: ${{ steps.config.outputs.build_ios }}
+      build_android: ${{ steps.config.outputs.build_android }}
+    steps:
+      - name: Configure deployment
+        id: config
+        run: |
+          # Determine build profile
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "profile=${{ github.event.inputs.profile }}" >> $GITHUB_OUTPUT
+            echo "platform=${{ github.event.inputs.platform }}" >> $GITHUB_OUTPUT
+            echo "should_submit=${{ github.event.inputs.submit }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "profile=production" >> $GITHUB_OUTPUT
+            echo "platform=all" >> $GITHUB_OUTPUT
+            echo "should_submit=false" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "profile=staging" >> $GITHUB_OUTPUT
+            echo "platform=all" >> $GITHUB_OUTPUT
+            echo "should_submit=false" >> $GITHUB_OUTPUT
+          else
+            echo "profile=preview" >> $GITHUB_OUTPUT
+            echo "platform=all" >> $GITHUB_OUTPUT
+            echo "should_submit=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Determine which platforms to build
+          platform="${{ github.event.inputs.platform || 'all' }}"
+          if [[ "$platform" == "all" || "$platform" == "ios" ]]; then
+            echo "build_ios=true" >> $GITHUB_OUTPUT
+          else
+            echo "build_ios=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if [[ "$platform" == "all" || "$platform" == "android" ]]; then
+            echo "build_android=true" >> $GITHUB_OUTPUT
+          else
+            echo "build_android=false" >> $GITHUB_OUTPUT
+          fi
+
+  # Build iOS app
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    needs: setup
+    if: needs.setup.outputs.build_ios == 'true'
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build --filter="!mobile"
+
+      - name: Configure iOS credentials
+        working-directory: apps/mobile
+        run: |
+          # Configure app identifier based on profile
+          profile="${{ needs.setup.outputs.profile }}"
+          if [[ "$profile" == "production" ]]; then
+            bundle_id="com.startertemplate.app"
+          elif [[ "$profile" == "staging" ]]; then
+            bundle_id="com.startertemplate.app.staging"
+          else
+            bundle_id="com.startertemplate.app.preview"
+          fi
+          
+          echo "Using bundle ID: $bundle_id"
+
+      - name: Build iOS app
+        working-directory: apps/mobile
+        run: |
+          eas build --platform ios --profile ${{ needs.setup.outputs.profile }} --non-interactive --no-wait
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Wait for build completion
+        working-directory: apps/mobile
+        run: |
+          echo "Waiting for iOS build to complete..."
+          # Get the latest build ID and wait for completion
+          build_id=$(eas build:list --platform ios --limit 1 --json | jq -r '.[0].id')
+          echo "Monitoring build: $build_id"
+          
+          while true; do
+            status=$(eas build:view $build_id --json | jq -r '.status')
+            echo "Build status: $status"
+            
+            if [[ "$status" == "FINISHED" ]]; then
+              echo "✅ iOS build completed successfully!"
+              break
+            elif [[ "$status" == "ERRORED" || "$status" == "CANCELED" ]]; then
+              echo "❌ iOS build failed with status: $status"
+              exit 1
+            fi
+            
+            sleep 60
+          done
+
+  # Build Android app
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    needs: setup
+    if: needs.setup.outputs.build_android == 'true'
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build --filter="!mobile"
+
+      - name: Configure Android credentials
+        working-directory: apps/mobile
+        run: |
+          # Configure app identifier based on profile
+          profile="${{ needs.setup.outputs.profile }}"
+          if [[ "$profile" == "production" ]]; then
+            app_id="com.startertemplate.app"
+          elif [[ "$profile" == "staging" ]]; then
+            app_id="com.startertemplate.app.staging"
+          else
+            app_id="com.startertemplate.app.preview"
+          fi
+          
+          echo "Using application ID: $app_id"
+
+      - name: Build Android app
+        working-directory: apps/mobile
+        run: |
+          eas build --platform android --profile ${{ needs.setup.outputs.profile }} --non-interactive --no-wait
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Wait for build completion
+        working-directory: apps/mobile
+        run: |
+          echo "Waiting for Android build to complete..."
+          # Get the latest build ID and wait for completion
+          build_id=$(eas build:list --platform android --limit 1 --json | jq -r '.[0].id')
+          echo "Monitoring build: $build_id"
+          
+          while true; do
+            status=$(eas build:view $build_id --json | jq -r '.status')
+            echo "Build status: $status"
+            
+            if [[ "$status" == "FINISHED" ]]; then
+              echo "✅ Android build completed successfully!"
+              break
+            elif [[ "$status" == "ERRORED" || "$status" == "CANCELED" ]]; then
+              echo "❌ Android build failed with status: $status"
+              exit 1
+            fi
+            
+            sleep 60
+          done
+
+  # Submit to app stores (optional)
+  submit-stores:
+    name: Submit to App Stores
+    runs-on: ubuntu-latest
+    needs: [setup, build-ios, build-android]
+    if: |
+      always() && 
+      needs.setup.outputs.should_submit == 'true' && 
+      needs.setup.outputs.profile == 'production' &&
+      (needs.build-ios.result == 'success' || needs.build-android.result == 'success')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Submit iOS to App Store
+        if: needs.build-ios.result == 'success'
+        working-directory: apps/mobile
+        run: |
+          echo "Submitting iOS app to App Store..."
+          eas submit --platform ios --latest --non-interactive
+        continue-on-error: true
+
+      - name: Submit Android to Play Store
+        if: needs.build-android.result == 'success'
+        working-directory: apps/mobile
+        run: |
+          echo "Submitting Android app to Play Store..."
+          eas submit --platform android --latest --non-interactive
+        continue-on-error: true
+
+  # Update Expo OTA
+  update-ota:
+    name: Update OTA
+    runs-on: ubuntu-latest
+    needs: [setup, build-ios, build-android]
+    if: |
+      always() && 
+      needs.setup.outputs.profile != 'production' &&
+      (needs.build-ios.result == 'success' || needs.build-android.result == 'success')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Publish OTA update
+        working-directory: apps/mobile
+        run: |
+          eas update --channel ${{ needs.setup.outputs.profile }} --message "Automated update from CI/CD"
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+
+  # Notify deployment status
+  notify:
+    name: Notify Mobile Deployment Status
+    runs-on: ubuntu-latest
+    needs: [setup, build-ios, build-android, submit-stores, update-ota]
+    if: always()
+
+    steps:
+      - name: Calculate deployment status
+        id: status
+        run: |
+          ios_status="${{ needs.build-ios.result || 'skipped' }}"
+          android_status="${{ needs.build-android.result || 'skipped' }}"
+          
+          if [[ "$ios_status" == "success" || "$android_status" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "message=Mobile deployment completed successfully" >> $GITHUB_OUTPUT
+          elif [[ "$ios_status" == "failure" || "$android_status" == "failure" ]]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "message=Mobile deployment failed" >> $GITHUB_OUTPUT
+          else
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            echo "message=Mobile deployment was skipped" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Notify success
+        if: steps.status.outputs.status == 'success'
+        run: |
+          echo "🎉 ${{ steps.status.outputs.message }}"
+          echo "Profile: ${{ needs.setup.outputs.profile }}"
+          echo "Platform: ${{ needs.setup.outputs.platform }}"
+
+      - name: Notify failure
+        if: steps.status.outputs.status == 'failure'
+        run: |
+          echo "❌ ${{ steps.status.outputs.message }}"
+          echo "Profile: ${{ needs.setup.outputs.profile }}"
+          echo "Platform: ${{ needs.setup.outputs.platform }}"
+          exit 1
+
+      # Optional: Send notification to Slack/Discord
+      # - name: Send notification
+      #   if: always()
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ steps.status.outputs.status }}
+      #     channel: '#mobile-deployments'
+      #     webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # Development web application with hot reload
+  web-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - WATCHPACK_POLLING=true
+    restart: unless-stopped
+    networks:
+      - dev-network
+
+  # Supabase local stack (optional for local development)
+  supabase-db:
+    image: supabase/postgres:15.1.0.27
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=postgres
+    volumes:
+      - supabase_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - dev-network
+    profiles:
+      - local-supabase
+
+  supabase-studio:
+    image: supabase/studio:20230803-5bdc993
+    ports:
+      - "3001:3000"
+    environment:
+      - STUDIO_PG_META_URL=http://supabase-meta:8080
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    depends_on:
+      - supabase-db
+    restart: unless-stopped
+    networks:
+      - dev-network
+    profiles:
+      - local-supabase
+
+  supabase-kong:
+    image: kong:2.8.1
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+      - "8444:8444"
+    environment:
+      - KONG_DATABASE=off
+      - KONG_DECLARATIVE_CONFIG=/var/lib/kong/kong.yml
+    volumes:
+      - ./supabase/kong.yml:/var/lib/kong/kong.yml:ro
+    restart: unless-stopped
+    networks:
+      - dev-network
+    profiles:
+      - local-supabase
+
+  # Redis for development
+  redis-dev:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - dev-network
+    profiles:
+      - cache
+
+  # Mailhog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: unless-stopped
+    networks:
+      - dev-network
+    profiles:
+      - email-testing
+
+volumes:
+  supabase_db_data:
+
+networks:
+  dev-network:
+    driver: bridge

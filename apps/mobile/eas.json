@@ -1,43 +1,116 @@
 {
   "cli": {
-    "version": ">= 5.9.0"
+    "version": ">= 5.9.0",
+    "appVersionSource": "remote"
   },
   "build": {
+    "base": {
+      "node": "18.17.0",
+      "pnpm": "8.15.0",
+      "env": {
+        "EXPO_USE_FAST_RESOLVER": "1"
+      },
+      "cache": {
+        "disabled": false,
+        "key": "starter-template-cache-v1",
+        "paths": [
+          "node_modules",
+          "../../node_modules",
+          "$HOME/.pnpm-store"
+        ]
+      }
+    },
     "development": {
+      "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "NODE_ENV": "development"
+        "NODE_ENV": "development",
+        "EXPO_PUBLIC_ENVIRONMENT": "development",
+        "EXPO_PUBLIC_APP_VARIANT": "development"
       },
-      "channel": "development"
+      "channel": "development",
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Debug",
+        "bundleIdentifier": "com.startertemplate.app.dev"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug",
+        "applicationId": "com.startertemplate.app.dev"
+      }
     },
-    "staging": {
+    "preview": {
+      "extends": "base",
       "distribution": "internal",
       "env": {
-        "NODE_ENV": "staging"
+        "NODE_ENV": "staging",
+        "EXPO_PUBLIC_ENVIRONMENT": "staging",
+        "EXPO_PUBLIC_APP_VARIANT": "preview"
+      },
+      "channel": "preview",
+      "ios": {
+        "buildConfiguration": "Release",
+        "bundleIdentifier": "com.startertemplate.app.preview"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "applicationId": "com.startertemplate.app.preview"
+      }
+    },
+    "staging": {
+      "extends": "base",
+      "distribution": "internal",
+      "env": {
+        "NODE_ENV": "staging",
+        "EXPO_PUBLIC_ENVIRONMENT": "staging",
+        "EXPO_PUBLIC_APP_VARIANT": "staging"
       },
       "channel": "staging",
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "bundleIdentifier": "com.startertemplate.app.staging"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "aab",
+        "gradleCommand": ":app:bundleRelease",
+        "applicationId": "com.startertemplate.app.staging"
       }
     },
     "production": {
+      "extends": "base",
       "env": {
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_ENVIRONMENT": "production",
+        "EXPO_PUBLIC_APP_VARIANT": "production"
       },
       "channel": "production",
+      "autoIncrement": true,
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "bundleIdentifier": "com.startertemplate.app"
       },
       "android": {
-        "buildType": "aab"
+        "buildType": "aab",
+        "gradleCommand": ":app:bundleRelease",
+        "applicationId": "com.startertemplate.app"
       }
     }
   },
   "submit": {
+    "staging": {
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "your-app-store-connect-app-id",
+        "appleTeamId": "your-apple-team-id"
+      },
+      "android": {
+        "serviceAccountKeyPath": "../secrets/google-service-account.json",
+        "track": "internal"
+      }
+    },
     "production": {
       "ios": {
         "appleId": "your-apple-id@example.com",
@@ -45,9 +118,13 @@
         "appleTeamId": "your-apple-team-id"
       },
       "android": {
-        "serviceAccountKeyPath": "../path/to/service-account-key.json",
-        "track": "production"
+        "serviceAccountKeyPath": "../secrets/google-service-account.json",
+        "track": "production",
+        "releaseStatus": "draft"
       }
     }
+  },
+  "updates": {
+    "url": "https://u.expo.dev/your-project-id"
   }
 }
